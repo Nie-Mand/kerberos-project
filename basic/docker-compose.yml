@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  server:
+    image: gosher-server:basic
+    ports:
+      - 50051
+  
+  host1:
+    build: ./host1
+    depends_on:
+      - server
+    environment:
+      - WHO=host1
+      - SERVER_HOST=server
+      - SERVER_PORT=50051
+
+  host2:
+    build: ./host2
+    depends_on:
+      - host1
+    environment:
+      - WHO=host2
+      - SERVER_HOST=server
+      - SERVER_PORT=50051

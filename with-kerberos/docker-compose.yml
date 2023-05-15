@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  krb5:
+    build: ./krb5
+    hostname: 'kdc-server'
+    ports:
+      - "749:749"
+      - "88:88/udp"
+    volumes:
+      - /dev/urandom:/dev/random
+    environment:
+      - REALM=GOSHER.COM
+      - SUPPORTED_ENCRYPTION_TYPES=aes256-cts-hmac-sha1-96:normal
+      - KADMIN_PRINCIPAL=kadmin/gadmin
+      - KADMIN_PASSWORD=gpassword
+      - KGSERVICE_PRINCIPAL=gosher-serv
+      - KGCONSUMER_PRINCIPAL=gosher-consumer
+      - KGCONSUMER_PASSWORD=gconsumer
+
+  consumer1:
+    build: ./consumer
+    hostname: 'consumer1'
+    depends_on:
+      - krb5
+    environment:
+      - PRINCIPAL=gosher-consumer
+      - REALM=GOSHER.COM
+      - KEYTAB_REALM=GOSHER.COM
+      - WHO=consumer1
+      - SERVER_HOST=serv
+      - SERVER_PORT=50051
+  
+  # consumer2:
+  #   build: ./consumer
+  #   hostname: 'consumer2'
+  #   depends_on:
+  #     - krb5
+  #   environment:
+  #     - PRINCIPAL=gosher-consumer
+  #     - REALM=GOSHER.COM
+
+  serv:
+    build: ./serv
+    hostname: 'serv'
+    ports:
+      - "50051:50051"
+    depends_on:
+      - krb5
+    environment:
+      - PRINCIPAL=gosher-serv
+      - REALM=GOSHER.COM
+      - USES_K5=1
+      - KEYTAB_PATH=/etc/krb5.keytab
